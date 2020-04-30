@@ -1,0 +1,5 @@
+read_verilog ../rtl/*.v ulx3s-top.v
+hierarchy -top ulx3s_top
+synth_ecp5 -top ulx3s_top
+hierarchy -top ulx3s_top -check -purge_lib
+write_json usb-dev.json
