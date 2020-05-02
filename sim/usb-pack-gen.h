@@ -45,7 +45,8 @@ public:
                        std::_Bit_iterator::iterator to);
 };
 
-static std::ostream &operator<<(std::ostream &os, const UsbBitVector &bv) {
+static __attribute__((unused)) std::ostream &
+operator<<(std::ostream &os, const UsbBitVector &bv) {
   bv.print(os);
   return os;
 }
@@ -63,7 +64,8 @@ public:
   void sendUsb() const;
 };
 
-static std::ostream &operator<<(std::ostream &os, const UsbSymbolVector &sv) {
+static __attribute__((unused)) std::ostream &
+operator<<(std::ostream &os, const UsbSymbolVector &sv) {
   sv.print(os);
   return os;
 }

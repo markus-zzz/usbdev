@@ -36,7 +36,7 @@ int main(void) {
 
 #include "usb-sim-tests.h"
 
-void test_001() {
+extern "C" void run_test() {
   // SETUP followed by DATA0
   UsbSetupPacket setup(0, 0);
   std::vector<uint8_t> payload{0x23, 0x64, 0x54, 0xaf, 0xca, 0xfe};

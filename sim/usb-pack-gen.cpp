@@ -350,9 +350,7 @@ UsbAckPacket *UsbAckPacket::tryDecode(UsbBitVector &bits) {
     return nullptr;
 }
 
-void UsbAckPacket::print(std::ostream &os) const {
-  os << "ACK" << std::endl;
-}
+void UsbAckPacket::print(std::ostream &os) const { os << "ACK" << std::endl; }
 
 UsbSymbolVector UsbAckPacket::encode() const {
   UsbBitVector syncBits("0000_0001");
@@ -380,6 +378,4 @@ UsbNakPacket *UsbNakPacket::tryDecode(UsbBitVector &bits) {
     return nullptr;
 }
 
-void UsbNakPacket::print(std::ostream &os) const {
-  os << "NAK" << std::endl;
-}
+void UsbNakPacket::print(std::ostream &os) const { os << "NAK" << std::endl; }

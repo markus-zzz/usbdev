@@ -45,7 +45,7 @@ int main(void) {
 
 #include "usb-sim-tests.h"
 
-void test_004() {
+extern "C" void run_test() {
   std::vector<uint8_t> payload{0x80, 0x06, 0x00, 0x01, 0x00, 0x00, 0x40, 0x00};
   UsbData0Packet data0(payload);
 

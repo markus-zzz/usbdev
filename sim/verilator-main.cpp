@@ -24,22 +24,9 @@
 #include "usb-pack-gen.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
+#include <dlfcn.h>
 #include <iomanip>
 #include <stdio.h>
-
-// Create test list.
-#define DEF_TEST(x) void x();
-#include "tests/tests.def"
-#undef DEF_TEST
-
-#define DEF_TEST(x) {x, #x},
-struct {
-  void (*f)(void);
-  const char *name;
-} tests[] = {
-#include "tests/tests.def"
-};
-#undef DEF_TEST
 
 static Vsoc_top *u_usb_dev = NULL;
 static VerilatedVcdC *trace = NULL;
@@ -171,16 +158,20 @@ void dumpRAM(unsigned size) {
 }
 
 int main(int argc, char *argv[]) {
-  void (*test_function)(void) = nullptr;
-
-  for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
-    if (!strcmp(tests[i].name, argv[1])) {
-      test_function = tests[i].f;
-      break;
-    }
+  if (argc != 2) {
+    fprintf(stderr, "Usage: %s <test-case.so>\n", argv[0]);
+    return -1;
   }
 
+  void *dl_handle = dlopen(argv[1], RTLD_LAZY);
+  if (!dl_handle) {
+    fprintf(stderr, "dlopen: %s\n", dlerror());
+    return -1;
+  }
+
+  void (*test_function)(void) = (void (*)())dlsym(dl_handle, "run_test");
   if (!test_function) {
+    fprintf(stderr, "dlsym: %s\n", dlerror());
     return -1;
   }
 
