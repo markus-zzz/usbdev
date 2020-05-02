@@ -111,9 +111,7 @@ module soc_top(
     end
   endgenerate
 
-  picorv32 #(
-    .STACKADDR(32'h1000_0200)
-  ) u_cpu(
+  picorv32 u_cpu(
     .clk(clk),
     .resetn(~rst),
     .mem_valid(cpu_mem_valid),
