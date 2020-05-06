@@ -43,6 +43,12 @@ module ulx3s_top(
 
   wire usb_oe, usb_out_j_not_k, usb_out_se0;
 
+  // XXX: Need to deal with possible metastability of async inputs by double flopping.
+
+  // XXX: This does not look like we are using the differential IO capabilities
+  // of the ECP5. Give it another try and upgrade SymbiFlow tools if it still
+  // does not work.
+
   assign usb_fpga_bd_dp = usb_oe ? (usb_out_se0 ? 1'b0 : ~usb_out_j_not_k) : 1'bz; // low-speed
   assign usb_fpga_bd_dn = usb_oe ? (usb_out_se0 ? 1'b0 :  usb_out_j_not_k) : 1'bz;
 
