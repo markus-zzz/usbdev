@@ -67,6 +67,56 @@ extern "C" void run_test() {
     out.sendUsb();
     data1.sendUsb();
   }
+
+  uint8_t address = 10;
+  {
+    // SET_ADDRESS
+    std::vector<uint8_t> payload{0x00, 0x05, address, 0x00,
+                                 0x00, 0x00, 0x00,    0x00};
+    UsbData0Packet data0(payload);
+    UsbSetupPacket setup(0, 0);
+    setup.sendUsb();
+    data0.sendUsb();
+    assert(dynamic_cast<UsbAckPacket *>(printResponse()) &&
+           "Expected ACK response.");
+    UsbInPacket in(0, 0);
+    in.sendUsb();
+    assert(dynamic_cast<UsbData1Packet *>(printResponse()) &&
+           "Expected DATA1 response.");
+    UsbAckPacket ack;
+    ack.sendUsb();
+  }
+
+  {
+    // Try setup again
+    UsbSetupPacket setup(address, 0);
+    setup.sendUsb();
+    data0.sendUsb();
+    assert(dynamic_cast<UsbAckPacket *>(printResponse()) &&
+           "Expected ACK response.");
+    UsbInPacket in(address, 0);
+
+    // Allow for a few NAKs
+    UsbPacket *rxp;
+    for (int i = 0; i < 3; i++) {
+      // IN
+      in.sendUsb();
+      while ((rxp = printResponse()) && dynamic_cast<UsbNakPacket *>(rxp))
+        in.sendUsb();
+      if (i & 1) {
+        // Then expect the DATA0.
+        assert(dynamic_cast<UsbData0Packet *>(rxp) &&
+               "Expected DATA0 response.");
+      } else {
+        // Then expect the DATA1.
+        assert(dynamic_cast<UsbData1Packet *>(rxp) &&
+               "Expected DATA1 response.");
+      }
+      // ACK the data
+      UsbAckPacket ack;
+      ack.sendUsb();
+    }
+  }
 }
 
 #endif

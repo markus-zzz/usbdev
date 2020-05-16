@@ -84,6 +84,7 @@ void CsvDumpSymbol(UsbSymbol sym) {
       }
     }
   }
+  fflush(csvFP);
 }
 
 void ClockUsbSymbol(UsbSymbol sym) {
