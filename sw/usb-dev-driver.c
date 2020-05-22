@@ -3,6 +3,23 @@
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
+typedef unsigned int size_t;
+
+size_t strlen(const char *str) {
+  int len = 0;
+  for (; str[len] != '\0'; len++)
+    ;
+  return len;
+}
+
+void *memcpy(void *dst, const void *src, size_t len) {
+  uint8_t *dstb = dst;
+  const uint8_t *srcb = src;
+  for (size_t i = 0; i < len; i++)
+    dstb[i] = srcb[i];
+  return dst;
+}
+
 ///////////////
 
 static uint32_t Usb_currEndpOwner;
@@ -91,20 +108,47 @@ static const struct Usb_deviceDescriptor deviceDescriptor = {
     .idVendor = 0x1234,
     .idProduct = 0x5678,
     .bcdDevice = 0x0100,
-    .iManufacturer = 0,
-    .iProduct = 0,
-    .iSerialNumber = 0,
+    .iManufacturer = 1,
+    .iProduct = 2,
+    .iSerialNumber = 3,
     .bNumConfigurations = 0x01};
 
-static const struct Usb_configDescriptor configDescriptor = {
-    .bLength = 9,
-    .bDescriptorType = 2,
-    .wTotalLength = 9,
-    .bNumInterfaces = 0,
-    .bConfigurationValue = 0,
-    .iConfiguration = 0,
-    .bmAttributes = 0x80,
-    .MaxPower = 50};
+static const struct __attribute__((packed)) {
+  struct Usb_configDescriptor configDescriptor;
+  struct Usb_interfaceDescriptor interfaceDescriptor;
+  struct Usb_endpointDescriptor endpointDescriptor;
+} compoundConfigDescriptor = {
+    .configDescriptor = {.bLength = 9,
+                         .bDescriptorType = 2,
+                         .wTotalLength = sizeof(compoundConfigDescriptor),
+                         .bNumInterfaces = 1,
+                         .bConfigurationValue = 1,
+                         .iConfiguration = 4,
+                         .bmAttributes = 0x80,
+                         .MaxPower = 50},
+    .interfaceDescriptor = {.bLength = 9,
+                            .bDescriptorType = 4,
+                            .bInterfaceNumber = 0,
+                            .bAlternateSetting = 0,
+                            .bNumEndpoints = 1,
+                            .bInterfaceClass = 0xff,
+                            .bInterfaceSubClass = 0xff,
+                            .bInterfaceProtocol = 0xff,
+                            .iInterface = 5},
+    .endpointDescriptor = {.bLength = 7,
+                           .bDescriptorType = 5,
+                           .bEndpointAddress = 0x04,
+                           .bmAttributes = 0x02,
+                           .wMaxPacketSize = 8,
+                           .bInterval = 0}};
+
+static const struct Usb_stringZeroDescriptor stringZeroDescriptor = {
+    .bLength = 4, .bDescriptorType = 3, .wLANGID = {0x0409}};
+
+static const char *strings[] = {
+    "Markus Lavin (https://www.zzzconsulting.se/)",
+    "My first USB Prototype device", "0123456789abcdef",
+    "The most awesome configuration!", "The one and only interface."};
 
 uint8_t *in0_data;
 int in0_idx, in0_len;
@@ -132,6 +176,9 @@ int main(void) {
   *R_USB_CTRL = 1;
 
   uint8_t pendingAddress = 0;
+  uint16_t activeConfig = 0;
+
+  uint8_t tmpBuf[64];
 
   while (1) {
     struct Usb_ownerChangeMask changeMask = Usb_ownerPollReg();
@@ -151,8 +198,32 @@ int main(void) {
             service_in0();
           } else if (setupPacket->wValue ==
                      0x0200) { // Configuration descriptor
-            in0_data = (uint8_t *)&configDescriptor;
-            in0_len = MIN(setupPacket->wLength, sizeof(configDescriptor));
+            in0_data = (uint8_t *)&compoundConfigDescriptor;
+            in0_len =
+                MIN(setupPacket->wLength, sizeof(compoundConfigDescriptor));
+            in0_idx = 0;
+            Usb_dataToggleClear(USB_ENDP_IN_0);
+            service_in0();
+          } else if ((setupPacket->wValue & 0xff00) ==
+                     0x0300) { // String descriptor
+            if ((setupPacket->wValue & 0x00ff) == 0) {
+              in0_data = (uint8_t *)&stringZeroDescriptor;
+              in0_len = MIN(setupPacket->wLength, 4);
+            } else {
+              int stringIdx = (setupPacket->wValue & 0x00ff) - 1;
+              struct Usb_stringDescriptor *stringDesc =
+                  (struct Usb_stringDescriptor *)tmpBuf;
+              int stringLen = strlen(strings[stringIdx]);
+              // The strings are sent UNICODE
+              stringDesc->bLength = 2 + stringLen * 2;
+              stringDesc->bDescriptorType = 3;
+              for (int i = 0; i < stringLen; i++) {
+                stringDesc->bString[i * 2 + 1] = 0;
+                stringDesc->bString[i * 2 + 0] = strings[stringIdx][i];
+              }
+              in0_data = tmpBuf;
+              in0_len = MIN(setupPacket->wLength, stringDesc->bLength);
+            }
             in0_idx = 0;
             Usb_dataToggleClear(USB_ENDP_IN_0);
             service_in0();
@@ -161,6 +232,12 @@ int main(void) {
                    setupPacket->bRequest == 5) { // SET_ADDRESS
           // Wait with address change until after IN DATA1 ACK.
           pendingAddress = setupPacket->wValue;
+          Usb_sizeInSet(USB_ENDP_IN_0, 0);
+          Usb_dataToggleSet(USB_ENDP_IN_0);
+          Usb_endpointOwnerSetUsb(USB_ENDP_IN_0);
+        } else if (setupPacket->bmRequestType == 0x00 &&
+                   setupPacket->bRequest == 9) { // SET_CONFIGURATION
+          activeConfig = setupPacket->wValue;
           Usb_sizeInSet(USB_ENDP_IN_0, 0);
           Usb_dataToggleSet(USB_ENDP_IN_0);
           Usb_endpointOwnerSetUsb(USB_ENDP_IN_0);
