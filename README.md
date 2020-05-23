@@ -43,7 +43,7 @@ decoder. E.g.
 ```
 sigrok-cli -i test_003.sim.sr -P usb_signalling:dp=0:dm=1,usb_packet | awk '/usb_packet-1: [^:]+$/{ print $0 }'
 ```
-should result in
+should result in (but if not also try decoding with `dp=1:dm=0`)
 ```
 usb_packet-1: OUT ADDR 0 EP 0
 usb_packet-1: DATA0 [ 23 64 54 AF CA FE ]

@@ -18,6 +18,9 @@
  *
  */
 
+/* verilator lint_off WIDTH */
+/* verilator lint_off PINMISSING */
+
 `default_nettype none
 
 module soc_top(
@@ -45,7 +48,7 @@ module soc_top(
   wire [9:0] ram_addr;
   wire [31:0] ram_wdata;
   wire [3:0] ram_wstrb;
- 
+
   wire usb_ram_access;
   assign usb_ram_access = usb_mem_ren | usb_mem_wen;
 
@@ -111,7 +114,9 @@ module soc_top(
     end
   endgenerate
 
-  picorv32 u_cpu(
+  picorv32 #(
+    .COMPRESSED_ISA(1)
+  ) u_cpu(
     .clk(clk),
     .resetn(~rst),
     .mem_valid(cpu_mem_valid),
@@ -145,7 +150,7 @@ module soc_top(
     .o_mem_wdata(usb_mem_wdata),
     .i_mem_rdata(usb_mem_rdata),
 
-    .i_reg_wen(cpu_mem_wstrb && cpu_mem_addr[31:28] == 4'h2),
+    .i_reg_wen(cpu_mem_wstrb != 4'h0 && cpu_mem_addr[31:28] == 4'h2),
     .i_reg_addr(cpu_mem_addr[5:2]),
     .o_reg_rdata(usb_reg_rdata),
     .i_reg_wdata(cpu_mem_wdata)

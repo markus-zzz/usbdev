@@ -138,9 +138,9 @@ static const struct __attribute__((packed)) {
     .endpointDescriptor = {.bLength = 7,
                            .bDescriptorType = 5,
                            .bEndpointAddress = 0x04,
-                           .bmAttributes = 0x02,
+                           .bmAttributes = 0x03,
                            .wMaxPacketSize = 8,
-                           .bInterval = 0}};
+                           .bInterval = 5}};
 
 static const struct Usb_stringZeroDescriptor stringZeroDescriptor = {
     .bLength = 4, .bDescriptorType = 3, .wLANGID = {0x0409}};

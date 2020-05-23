@@ -32,8 +32,8 @@ foreach $input (@inputs) {
   print "success\n";
 
   print "  Compiling test firmware   ... ";
-  if (system("clang --target=riscv32 -std=c99 -DCOMPILE_FIRMWARE=1 -Wall -Werror -O3 $input -c -o $test.o -I../sw > $test.comp.log 2>&1") ||
-      system("llvm-mc --arch=riscv32 -assemble ../sw/start.S --filetype=obj -o start.o") ||
+  if (system("clang --target=riscv32 -march=rv32ic -mno-relax -std=c99 -DCOMPILE_FIRMWARE=1 -Wall -Werror -O3 $input -c -o $test.o -I../sw > $test.comp.log 2>&1") ||
+      system("llvm-mc --arch=riscv32 -mcpu=generic-rv32 -mattr=+c -assemble ../sw/start.S --filetype=obj -o start.o") ||
       system("ld.lld -T ../sw/system.ld start.o $test.o -o $test.elf") ||
       system("llvm-objcopy --output-target=binary $test.elf rom.bin") ||
       system("hexdump -v -e '4/4 \"%08x \" \"\n\"' rom.bin > rom.vh")) {

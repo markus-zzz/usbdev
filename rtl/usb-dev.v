@@ -18,6 +18,8 @@
  *
  */
 
+/* verilator lint_off WIDTH */
+
 `default_nettype none
 
 module usb_dev(
@@ -41,7 +43,7 @@ module usb_dev(
   input i_reg_ren,
   input  [3:0] i_reg_addr,
   input  [31:0] i_reg_wdata,
-  output [31:0] o_reg_rdata,
+  output reg [31:0] o_reg_rdata,
 
   output test_out
 );
@@ -494,11 +496,11 @@ module usb_dev(
                       tx_crc16_tmp[8],tx_crc16_tmp[9],tx_crc16_tmp[10],tx_crc16_tmp[11],
                       tx_crc16_tmp[12],tx_crc16_tmp[13],tx_crc16_tmp[14],tx_crc16_tmp[15]};
 
-  wire [3:0] bit_cntr_minus_one;
-  assign bit_cntr_minus_one = data_bit_cntr[6:3] - 4'h1;
-  assign o_mem_addr = state == S_WAIT_DATA ? {1'b0, token_endp, bit_cntr_minus_one[2:0]} : {1'b1, token_endp, tx_data_packet_idx[2:0]};
+  wire [3:0] byte_cntr_minus_one;
+  assign byte_cntr_minus_one = data_bit_cntr[6:3] - 4'h1;
+  assign o_mem_addr = state == S_WAIT_DATA ? {1'b0, token_endp, byte_cntr_minus_one[2:0]} : {1'b1, token_endp, tx_data_packet_idx[2:0]};
   assign o_mem_wdata = dec_shift[31:24];
-  assign o_mem_wen = (usb_clk_en && state == S_WAIT_DATA && token_valid && r_usb_endp_owner[{1'b0, token_endp}] && data_bit_cntr[2:0] == 0 && bit_cntr_minus_one < 8);
+  assign o_mem_wen = (usb_clk_en && state == S_WAIT_DATA && token_valid && r_usb_endp_owner[{1'b0, token_endp}] && data_bit_cntr[2:0] == 0 && byte_cntr_minus_one < 8);
   assign o_mem_ren = (usb_clk_en && (state == S_TX_DATA || state == S_TX_PID) && reload);
 
   reg mem_ren_p;

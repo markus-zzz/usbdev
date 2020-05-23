@@ -57,7 +57,9 @@ module sprom(clk, rst, ce, oe, addr, do);
 	    ra <= addr;     // read address needs to be registered to read clock
 
 	initial begin
+		/* verilator lint_off WIDTH */
 		if (MEM_INIT_FILE != "") begin
+		/* verilator lint_on WIDTH */
 			$readmemh(MEM_INIT_FILE, mem);
 		end
 	end
