@@ -109,8 +109,9 @@ module usb_dev(
     .o_bit_en(dec_bit_en)
   );
 
-  usb_bit_encode u_bit_enc(
-    .i_clk_48mhz(i_clk_48mhz),
+  usb_bit_encode_2 u_bit_enc(
+    .clk(i_clk_48mhz),
+    .rst(i_rst),
     .i_byte(tx_byte),
     .i_enc_en(sample_pos_en),
     .i_restart(state == S_TX_SYNC),
