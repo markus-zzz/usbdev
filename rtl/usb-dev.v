@@ -100,8 +100,9 @@ module usb_dev(
     .o_sample_en(sample_pos_en)
   );
 
-  usb_bit_decode u_bit_dec(
-    .i_clk_48mhz(i_clk_48mhz),
+  usb_bit_decode_2 u_bit_dec(
+    .clk(i_clk_48mhz),
+    .rst(i_rst),
     .i_bit(i_usb_j_not_k),
     .i_bit_en(sample_pos_en),
     .o_bit(dec_bit),
