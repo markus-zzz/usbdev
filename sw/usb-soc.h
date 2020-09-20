@@ -22,15 +22,17 @@
 
 #include <stdint.h>
 
-#define MEM_BASE_ROM 0x00000000UL
-#define MEM_BASE_RAM 0x10000000UL
-#define MEM_BASE_REG 0x20000000UL
+#define MEM_BASE_ROM     0x00000000UL
+#define MEM_BASE_RAM     0x10000000UL
+#define MEM_BASE_USB_REG 0x20000000UL
+#define MEM_BASE_SYS_REG 0x30000000UL
+#define MEM_BASE_C64_RAM 0x50000000UL
 
-#define R_USB_ADDR               ((volatile uint32_t*)(MEM_BASE_REG + 0x0))
-#define R_USB_ENDP_OWNER         ((volatile uint32_t*)(MEM_BASE_REG + 0x4))
-#define R_USB_CTRL               ((volatile uint32_t*)(MEM_BASE_REG + 0x8))
-#define R_USB_IN_SIZE_0_7        ((volatile uint32_t*)(MEM_BASE_REG + 0xc))
-#define R_USB_IN_SIZE_8_15       ((volatile uint32_t*)(MEM_BASE_REG + 0x10))
-#define R_USB_DATA_TOGGLE        ((volatile uint32_t*)(MEM_BASE_REG + 0x14))
-#define R_USB_OUT_SIZE_0_7       ((volatile uint32_t*)(MEM_BASE_REG + 0x18))
-#define R_USB_OUT_SIZE_8_15      ((volatile uint32_t*)(MEM_BASE_REG + 0x1c))
+#define R_USB_ADDR               ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x0))
+#define R_USB_ENDP_OWNER         ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x4))
+#define R_USB_CTRL               ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x8))
+#define R_USB_IN_SIZE_0_7        ((volatile uint32_t*)(MEM_BASE_USB_REG + 0xc))
+#define R_USB_IN_SIZE_8_15       ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x10))
+#define R_USB_DATA_TOGGLE        ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x14))
+#define R_USB_OUT_SIZE_0_7       ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x18))
+#define R_USB_OUT_SIZE_8_15      ((volatile uint32_t*)(MEM_BASE_USB_REG + 0x1c))

@@ -42,7 +42,7 @@ module crc16(
 
   end // always
 
-  always @(posedge clk, posedge rst) begin
+  always @(posedge clk) begin
     if(rst) begin
       lfsr_q <= {16{1'b1}};
     end

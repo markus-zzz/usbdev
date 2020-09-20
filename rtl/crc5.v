@@ -31,7 +31,7 @@ module crc5(
 
   end // always
 
-  always @(posedge clk, posedge rst) begin
+  always @(posedge clk) begin
     if(rst) begin
       lfsr_q <= {5{1'b1}};
     end

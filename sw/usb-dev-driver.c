@@ -105,8 +105,8 @@ static const struct Usb_deviceDescriptor deviceDescriptor = {
     .bDeviceSubClass = 0xff,
     .bDeviceProtocol = 0xff,
     .bMaxPacketSize = 8,
-    .idVendor = 0x1234,
-    .idProduct = 0x5678,
+    .idVendor = 0xabc0,
+    .idProduct = 0x0064,
     .bcdDevice = 0x0100,
     .iManufacturer = 1,
     .iProduct = 2,
@@ -123,7 +123,7 @@ static const struct __attribute__((packed)) {
                          .wTotalLength = sizeof(compoundConfigDescriptor),
                          .bNumInterfaces = 1,
                          .bConfigurationValue = 1,
-                         .iConfiguration = 4,
+                         .iConfiguration = 0,
                          .bmAttributes = 0x80,
                          .MaxPower = 50},
     .interfaceDescriptor = {.bLength = 9,
@@ -134,10 +134,10 @@ static const struct __attribute__((packed)) {
                             .bInterfaceClass = 0xff,
                             .bInterfaceSubClass = 0xff,
                             .bInterfaceProtocol = 0xff,
-                            .iInterface = 5},
+                            .iInterface = 0},
     .endpointDescriptor = {.bLength = 7,
                            .bDescriptorType = 5,
-                           .bEndpointAddress = 0x04,
+                           .bEndpointAddress = 0x01,
                            .bmAttributes = 0x03,
                            .wMaxPacketSize = 8,
                            .bInterval = 5}};
@@ -147,8 +147,8 @@ static const struct Usb_stringZeroDescriptor stringZeroDescriptor = {
 
 static const char *strings[] = {
     "Markus Lavin (https://www.zzzconsulting.se/)",
-    "My first USB Prototype device", "0123456789abcdef",
-    "The most awesome configuration!", "The one and only interface."};
+    "MyC64 - FPGA based Commodore 64 emulator as a USB device",
+    "0123456789abcdef"};
 
 uint8_t *in0_data;
 int in0_idx, in0_len;
@@ -166,6 +166,11 @@ void service_in0(void) {
   }
 }
 
+void WriteByte(uint16_t addr, uint8_t byte) {
+  volatile uint8_t *q = (volatile uint8_t *)(MEM_BASE_C64_RAM + addr);
+  *q = byte;
+}
+
 int main(void) {
   // .data and .bss init - begin
   Usb_currEndpOwner = 0;
@@ -173,10 +178,16 @@ int main(void) {
 
   *R_USB_ADDR = 0;
   Usb_endpointOwnerSetUsb(USB_ENDP_OUT_0);
+  Usb_endpointOwnerSetUsb(USB_ENDP_OUT_1);
   *R_USB_CTRL = 1;
 
   uint8_t pendingAddress = 0;
   uint16_t activeConfig = 0;
+  uint16_t activeInterface = 0;
+  uint8_t controlDataStage = 0;
+  uint16_t prgLoadAddr = 0;
+  uint16_t prgLoadSize = 0;
+  uint16_t prgLoadPos = 0;
 
   uint8_t tmpBuf[64];
 
@@ -184,7 +195,22 @@ int main(void) {
     struct Usb_ownerChangeMask changeMask = Usb_ownerPollReg();
 
     if (Usb_endpointOwnerGet(USB_ENDP_OUT_0) == USB_ENDP_OWNER_CPU) {
-      if (Usb_sizeOutGet(USB_ENDP_OUT_0) == 8) {
+      if (controlDataStage) {
+        unsigned size = Usb_sizeOutGet(USB_ENDP_OUT_0);
+        // Write bytes to C64 RAM.
+        volatile uint8_t *p = (volatile uint8_t *)MEM_BASE_RAM;
+        for (int i = 0; i < size; i++) {
+          WriteByte(prgLoadAddr++, p[i]);
+          prgLoadPos++;
+        }
+        if (prgLoadPos == prgLoadSize) {
+          controlDataStage = 0;
+          Usb_sizeInSet(USB_ENDP_IN_0, 0);
+          Usb_dataToggleSet(USB_ENDP_IN_0); // XXX: What does the standard say?
+                                            // Need to check this.
+          Usb_endpointOwnerSetUsb(USB_ENDP_IN_0);
+        }
+      } else if (Usb_sizeOutGet(USB_ENDP_OUT_0) == 8) {
         // Decode SETUP packet
         volatile struct Usb_controlSetupPacket *setupPacket =
             (volatile struct Usb_controlSetupPacket *)MEM_BASE_RAM;
@@ -241,6 +267,18 @@ int main(void) {
           Usb_sizeInSet(USB_ENDP_IN_0, 0);
           Usb_dataToggleSet(USB_ENDP_IN_0);
           Usb_endpointOwnerSetUsb(USB_ENDP_IN_0);
+        } else if (setupPacket->bmRequestType == 0x00 &&
+                   setupPacket->bRequest == 11) { // SET_INTERFACE
+          activeInterface = setupPacket->wIndex;
+          Usb_sizeInSet(USB_ENDP_IN_0, 0);
+          Usb_dataToggleSet(USB_ENDP_IN_0);
+          Usb_endpointOwnerSetUsb(USB_ENDP_IN_0);
+        } else if (setupPacket->bmRequestType == 0x42 &&
+                   setupPacket->bRequest == 1) { // Vendor specific - Load .prg
+          prgLoadAddr = setupPacket->wValue;
+          prgLoadSize = setupPacket->wLength;
+          prgLoadPos = 0;
+          controlDataStage = 1;
         }
       }
       Usb_endpointOwnerSetUsb(USB_ENDP_OUT_0);
@@ -251,6 +289,16 @@ int main(void) {
         pendingAddress = 0;
       } else
         service_in0();
+    } else if (Usb_ownerChangeMaskTest(changeMask, USB_ENDP_OUT_1) &&
+               Usb_endpointOwnerGet(USB_ENDP_OUT_1) == USB_ENDP_OWNER_CPU) {
+      if (Usb_sizeOutGet(USB_ENDP_OUT_1) == 8) {
+        volatile uint32_t *p = (volatile uint32_t *)(MEM_BASE_RAM + 8);
+        volatile uint32_t *q = (volatile uint32_t *)MEM_BASE_SYS_REG;
+        q[0] = p[0];
+        q[1] = p[1];
+      }
+      Usb_dataToggleSet(USB_ENDP_OUT_1);
+      Usb_endpointOwnerSetUsb(USB_ENDP_OUT_1);
     }
   }
 

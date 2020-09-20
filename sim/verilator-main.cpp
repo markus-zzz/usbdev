@@ -195,6 +195,7 @@ int main(int argc, char *argv[]) {
   u_usb_dev->i_rst = 0;
   u_usb_dev->i_usb_j_not_k = 0;
   u_usb_dev->i_usb_se0 = 0;
+  u_usb_dev->i_ext_ready = 1;
 
   // Pulse reset.
   u_usb_dev->i_rst = 1;

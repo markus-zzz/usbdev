@@ -149,8 +149,11 @@ extern "C" void run_test() {
                                                sizeof(*interfaceDescriptor) +
                                                sizeof(*endpointDescriptor));
 
-  res = UsbControlTransfer(
-      devAddr, {0x80, 0x06, (uint16_t)(0x0300 | deviceDescriptor.iManufacturer), 0x0000, sizeof(data)}, data);
+  res = UsbControlTransfer(devAddr,
+                           {0x80, 0x06,
+                            (uint16_t)(0x0300 | deviceDescriptor.iManufacturer),
+                            0x0000, sizeof(data)},
+                           data);
   assert(res > 0);
   return;
 }

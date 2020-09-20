@@ -1,6 +1,6 @@
 MEMORY {
     ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 16K
-    RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 4K
+    RAM (rwx) : ORIGIN = 0x10000100, LENGTH = 4K - 0x100 #First 256 bytes of RAM reserved for USB
 }
 
 SECTIONS {
