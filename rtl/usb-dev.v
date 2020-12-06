@@ -94,8 +94,9 @@ module usb_dev(
   reg [6:0] tx_data_packet_len, tx_data_packet_idx;
   wire [15:0] tx_crc16, tx_crc16_tmp;
 
-  sample_pos_adj u_spa(
-    .i_clk_4x(i_clk_48mhz),
+  sample_pos_adj_2 u_spa(
+    .clk(i_clk_48mhz),
+    .rst(i_rst),
     .i_data(i_usb_j_not_k),
     .o_sample_en(sample_pos_en)
   );
@@ -449,19 +450,19 @@ module usb_dev(
   end
 
   // CRC for Token and SOF packets.
-  crc5 u_crc5(
-    .data_in(dec_shift[31]),
-    .crc_en(dec_bit_en & crc5_en),
-    .crc_out(crc5_res),
+  crc5_2 u_crc5(
+    .i_data(dec_shift[31]),
+    .i_crc_en(dec_bit_en & crc5_en),
+    .o_crc(crc5_res),
     .rst(state == S_WAIT_SYNC),
     .clk(i_clk_48mhz)
   );
 
   // CRC for Data packets.
-  crc16 u_crc16(
-    .data_in(dec_shift[31]),
-    .crc_en(dec_bit_en & crc16_en),
-    .crc_out(crc16_res),
+  crc16_2 u_crc16(
+    .i_data(dec_shift[31]),
+    .i_crc_en(dec_bit_en & crc16_en),
+    .o_crc(crc16_res),
     .rst(state == S_WAIT_SYNC),
     .clk(i_clk_48mhz)
   );
@@ -484,10 +485,10 @@ module usb_dev(
   end
 
   // CRC for Tx Data packets (should be merged with other crc16).
-  crc16 u_crc16_tx(
-    .data_in(tx_crc_shift[0]),
-    .crc_en(tx_crc_shift_cntr < 8),
-    .crc_out(tx_crc16_tmp),
+  crc16_2 u_crc16_tx(
+    .i_data(tx_crc_shift[0]),
+    .i_crc_en(tx_crc_shift_cntr < 8),
+    .o_crc(tx_crc16_tmp),
     .rst(state == S_TX_SYNC),
     .clk(i_clk_48mhz)
   );

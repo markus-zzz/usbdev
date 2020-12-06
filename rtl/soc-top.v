@@ -148,9 +148,9 @@ module soc_top(
   wire [7:0] usb_mem_wdata;
   reg [7:0] usb_mem_rdata;
 
-  usb_dev u_usb_dev(
-    .i_rst(rst),
-    .i_clk_48mhz(clk),
+  usb_dev_2 u_usb_dev(
+    .rst(rst),
+    .clk(clk),
     .i_usb_j_not_k(i_usb_j_not_k),
     .i_usb_se0(i_usb_se0),
     .o_usb_oe(o_usb_oe),

@@ -4,6 +4,8 @@ set -e
 
 rm -rf obj_dir
 
+python3 ../rtl/usb-dev.py generate > ../rtl/usb-nmigen.v
+
 verilator -trace -cc ../rtl/*.v +1364-2005ext+v --top-module soc_top -Wno-fatal
 VERILATOR_ROOT=/usr/share/verilator/
 cd obj_dir; make -f Vsoc_top.mk; cd ..
