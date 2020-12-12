@@ -64,6 +64,7 @@ void ClockUsbSymbolInternal(UsbSymbol sym) {
     if (trace)
       trace->dump(tick++);
   }
+  trace->flush();
 }
 
 void CsvDumpSymbol(UsbSymbol sym) {
