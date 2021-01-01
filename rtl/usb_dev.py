@@ -33,7 +33,7 @@ class UsbBitDecoder(Elaboratable):
   def elaborate(self, platform):
     m = Module()
     bit_p = Signal()
-    ones_cntr = Signal(range(0, 6))
+    ones_cntr = Signal(range(7))
     # NRZI decode (is XNOR of last two incomming bits).
     m.d.comb += [self.o_bit.eq(~(bit_p ^ self.i_bit)), self.o_bit_en.eq(0)]
     with m.If(self.i_bit_en):
@@ -59,8 +59,8 @@ class UsbBitEncoder(Elaboratable):
     m = Module()
 
     shift = Signal(8)
-    shift_cntr = Signal(range(0, 7))
-    ones_cntr = Signal(range(0, 6))
+    shift_cntr = Signal(range(8))
+    ones_cntr = Signal(range(7))
     prev_enc_bit = Signal()
     six_ones = Signal()
     stuffed_bit = Signal()
@@ -98,7 +98,7 @@ class UsbBitSync(Elaboratable):
 
   def elaborate(self, platform):
     m = Module()
-    cntr = Signal(range(0, 9))
+    cntr = Signal(range(10))
     m.d.comb += self.o_sample_en.eq(cntr == 0)
     with m.If(cntr == 9):
       m.d.sync += cntr.eq(0)

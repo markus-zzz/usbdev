@@ -21,10 +21,6 @@
 /* verilator lint_off WIDTH */
 /* verilator lint_off PINMISSING */
 
-`ifndef USBDEV_ROM_VH
-`define USBDEV_ROM_VH "rom.vh"
-`endif
-
 `default_nettype none
 
 module soc_top(
@@ -96,9 +92,11 @@ module soc_top(
 
   // ROM - CPU code.
   sprom #(
+`ifdef USBDEV_ROM_VH
+    .MEM_INIT_FILE(`USBDEV_ROM_VH),
+`endif
     .aw(10),
-    .dw(32),
-    .MEM_INIT_FILE(`USBDEV_ROM_VH)
+    .dw(32)
   ) u_rom(
     .clk(clk),
     .rst(rst),

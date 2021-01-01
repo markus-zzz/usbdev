@@ -55,16 +55,16 @@ module ulx3s_top(
   always @(posedge clk_25mhz)
     pipe <= {usb_fpga_bd_dp, usb_fpga_bd_dn};
 
-  soc_top u_soc(
-    .i_rst(btn[6]),
-    .i_clk(clk_15mhz),
+  usb_subsys u_usb_subsys(
+    .clk(clk_15mhz),
+    .rst(btn[6]),
     .i_usb_j_not_k(usb_fpga_bd_dn), // low-speed
     .i_usb_se0(usb_fpga_bd_dp ~| usb_fpga_bd_dn),
     .o_usb_oe(usb_oe),
     .o_usb_j_not_k(usb_out_j_not_k),
     .o_usb_se0(usb_out_se0),
-    .o_usb_attach(usb_fpga_pu_dn),
-    .test_out(gp[22])
+    .o_usb_attach(usb_fpga_pu_dn)
+    //.test_out(gp[22])
   );
 
   pll pll0(

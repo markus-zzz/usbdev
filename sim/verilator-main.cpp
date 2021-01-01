@@ -18,9 +18,8 @@
  *
  */
 
-#include "Vsoc_top.h"
-#include "Vsoc_top_soc_top.h"
-#include "Vsoc_top_spram__D8.h"
+#include "Vusb_subsys.h"
+#include "Vusb_subsys_usb_subsys.h"
 #include "usb-pack-gen.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
@@ -28,7 +27,7 @@
 #include <iomanip>
 #include <stdio.h>
 
-static Vsoc_top *u_usb_dev = NULL;
+static Vusb_subsys *u_usb_dev = NULL;
 static VerilatedVcdC *trace = NULL;
 static unsigned tick = 0;
 
@@ -55,11 +54,11 @@ void ClockUsbSymbolInternal(UsbSymbol sym) {
   }
 
   for (int i = 0; i < 10; i++) {
-    u_usb_dev->i_clk = 1;
+    u_usb_dev->clk = 1;
     u_usb_dev->eval();
     if (trace)
       trace->dump(tick++);
-    u_usb_dev->i_clk = 0;
+    u_usb_dev->clk = 0;
     u_usb_dev->eval();
     if (trace)
       trace->dump(tick++);
@@ -143,10 +142,9 @@ UsbPacket *printResponse() {
 }
 
 void dumpRAM(unsigned size) {
-  uint8_t *p[4] = {u_usb_dev->soc_top->genblk1__BRA__0__KET____DOT__u_ram->mem,
-                   u_usb_dev->soc_top->genblk1__BRA__1__KET____DOT__u_ram->mem,
-                   u_usb_dev->soc_top->genblk1__BRA__2__KET____DOT__u_ram->mem,
-                   u_usb_dev->soc_top->genblk1__BRA__3__KET____DOT__u_ram->mem};
+  uint8_t *p[4] = {
+      u_usb_dev->usb_subsys->u_ram_0, u_usb_dev->usb_subsys->u_ram_1,
+      u_usb_dev->usb_subsys->u_ram_2, u_usb_dev->usb_subsys->u_ram_3};
 
   for (unsigned i = 0; i < size; i++) {
     if (i % 16 == 0)
@@ -159,9 +157,22 @@ void dumpRAM(unsigned size) {
   std::cout << std::endl;
 }
 
+void loadROM(const char *path) {
+  uint32_t *p = u_usb_dev->usb_subsys->u_rom;
+  FILE *fp = fopen(path, "rb");
+  assert(fp);
+  fseek(fp, 0, SEEK_END);
+  auto size = ftell(fp);
+  assert(size <= sizeof(u_usb_dev->usb_subsys->u_rom));
+  rewind(fp);
+  auto res = fread(p, size, 1, fp);
+  assert(res == 1);
+  fclose(fp);
+}
+
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s <test-case.so>\n", argv[0]);
+  if (argc != 3) {
+    fprintf(stderr, "Usage: %s <test-case.so> <firmware-rom.bin>\n", argv[0]);
     return -1;
   }
 
@@ -184,7 +195,7 @@ int main(int argc, char *argv[]) {
 
   Verilated::traceEverOn(true);
 
-  u_usb_dev = new Vsoc_top;
+  u_usb_dev = new Vusb_subsys;
 
   if (true) {
     trace = new VerilatedVcdC;
@@ -192,16 +203,19 @@ int main(int argc, char *argv[]) {
     trace->open("dump.vcd");
   }
 
-  u_usb_dev->i_clk = 0;
-  u_usb_dev->i_rst = 0;
+  u_usb_dev->clk = 0;
+  u_usb_dev->rst = 0;
   u_usb_dev->i_usb_j_not_k = 0;
   u_usb_dev->i_usb_se0 = 0;
-  u_usb_dev->i_ext_ready = 1;
+  //  u_usb_dev->i_ext_ready = 1;
 
   // Pulse reset.
-  u_usb_dev->i_rst = 1;
+  u_usb_dev->rst = 1;
   ClockUsbSymbol(UsbSymbol::J);
-  u_usb_dev->i_rst = 0;
+  // Load ROM.
+  loadROM(argv[2]);
+  ClockUsbSymbol(UsbSymbol::J);
+  u_usb_dev->rst = 0;
 
   // Wait for USB device to attach.
   while (!u_usb_dev->o_usb_attach)

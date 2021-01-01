@@ -40,7 +40,7 @@ module sprom(clk, rst, ce, oe, addr, do);
 	// Module body
 	//
 
-	reg [dw-1:0] mem [(1<<aw) -1:0];
+	reg [dw-1:0] mem [(1<<aw) -1:0] /* verilator public */;
 	reg [aw-1:0] ra;
 	reg oe_r;
 

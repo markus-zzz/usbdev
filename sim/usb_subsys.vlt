@@ -1,0 +1,6 @@
+`verilator_config
+public -module "usb_subsys" -var "u_rom"
+public -module "usb_subsys" -var "u_ram_0"
+public -module "usb_subsys" -var "u_ram_1"
+public -module "usb_subsys" -var "u_ram_2"
+public -module "usb_subsys" -var "u_ram_3"

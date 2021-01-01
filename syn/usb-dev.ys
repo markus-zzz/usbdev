@@ -1,4 +1,5 @@
-read_verilog ../rtl/*.v ulx3s-top.v
+read_verilog usb_subsys.v ulx3s-top.v ../rtl/verilog/pll.v ../rtl/verilog/picorv32.v
+
 hierarchy -top ulx3s_top
 synth_ecp5 -top ulx3s_top
 hierarchy -top ulx3s_top -check -purge_lib

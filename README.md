@@ -56,3 +56,9 @@ usb_packet-1: ACK
 usb_packet-1: IN ADDR 0 EP 1
 usb_packet-1: NAK
 ```
+
+## TODO/BUGS
+
+* Data toggle for OUT (the fact that the RTL ignores this is likely the cause of data corruption during load in the MyC64 case).
+* Protocol STALL for SETUP requests not supported (currently `lsusb` hangs due to this).
+* Immediately reset/disable corresponding IN endpoint when SETUP is received (have seen host issue new SETUP to try and start over but firmware too slow to act so subsequent IN is handled by old state from previous SETUP).
