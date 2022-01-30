@@ -39,6 +39,7 @@ module soc_top(
   output reg [31:0] o_port_0,
   output reg [31:0] o_port_1,
   output reg [31:0] o_port_2,
+  output reg [31:0] o_port_3,
   output reg [15:0] o_ext_addr,
   output reg [7:0] o_ext_data,
   output reg o_ext_wstrb,
@@ -96,7 +97,7 @@ module soc_top(
 
   // ROM - CPU code.
   sprom #(
-    .aw(10),
+    .aw(11),
     .dw(32),
     .MEM_INIT_FILE(`USBDEV_ROM_VH)
   ) u_rom(
@@ -104,7 +105,7 @@ module soc_top(
     .rst(rst),
     .ce(cpu_mem_valid && cpu_mem_addr[31:28] == 4'h0),
     .oe(1'b1),
-    .addr(cpu_mem_addr[11:2]),
+    .addr(cpu_mem_addr[12:2]),
     .do(rom_rdata)
   );
 
@@ -190,12 +191,14 @@ module soc_top(
       o_port_0 <= 0;
       o_port_1 <= 0;
       o_port_2 <= 0;
+      o_port_3 <= 0;
     end
     else if (cpu_mem_wstrb == 4'hf && cpu_mem_addr[31:28] == 4'h3) begin
       case (cpu_mem_addr[3:0])
         4'h0: o_port_0 <= cpu_mem_wdata;
         4'h4: o_port_1 <= cpu_mem_wdata;
         4'h8: o_port_2 <= cpu_mem_wdata;
+        4'hc: o_port_3 <= cpu_mem_wdata;
         default: /* do nothing */;
       endcase
     end
